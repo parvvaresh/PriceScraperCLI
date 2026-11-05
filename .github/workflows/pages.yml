@@ -1,0 +1,82 @@
+name: Deploy web to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/15 * * * *" # scrape fresh prices every ~15 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # GitHub Pages is static, so history lives in the deployed site itself:
+      # download the currently published files, append a new point, redeploy.
+      - name: Download previously published data
+        env:
+          SITE: ${{ steps.pages.outputs.base_url }}
+        run: |
+          mkdir -p web/public/data
+          curl -fsSL "$SITE/data/history.json" -o web/public/data/history.json || echo "no previous history"
+          curl -fsSL "$SITE/data/prices.json" -o /tmp/prev-prices.json || echo "no previous snapshot"
+
+      - name: Scrape tgju.org
+        run: |
+          if go run . -json -out web/public/data/prices.json -history web/public/data/history.json -history-max 3000; then
+            echo "Scraped fresh prices"
+          elif [ -s /tmp/prev-prices.json ]; then
+            echo "::warning::Scrape failed; re-publishing the previous snapshot"
+            cp /tmp/prev-prices.json web/public/data/prices.json
+          else
+            echo "::error::Scrape failed and there is no previous snapshot"; exit 1
+          fi
+
+      - name: Build site
+        working-directory: web
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
