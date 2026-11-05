@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -45,11 +44,7 @@ var displayOrder = []string{
 
 func clearScreen() {
 	// ANSI clear; works in most terminals (Windows 10+ with ANSI)
-	if runtime.GOOS == "windows" {
-		fmt.Print("\033[H\033[2J")
-	} else {
-		fmt.Print("\033[H\033[2J")
-	}
+	fmt.Print("\033[H\033[2J")
 }
 
 // Normalize digits & separators (handles Persian/Arabic numerals and separators)
@@ -94,7 +89,7 @@ func parseFloatSafe(s string) float64 {
 }
 
 // Extract first number-like token
-var numRe = regexp.MustCompile(`[\d۰-۹٠-٩\.,٬،]+(\.\d+)?`)
+var numRe = regexp.MustCompile(`[\d۰-۹٠-٩\.,٬،٫]+`)
 
 func firstNumberLike(text string) string {
 	return numRe.FindString(text)
@@ -152,9 +147,10 @@ func jalaliDateString(t time.Time) string {
 
 // --------------------------- Scraper ---------------------------
 
-func ScrapePrices() (map[string]string, error) {
-	url := "https://www.tgju.org/"
-	req, err := http.NewRequest("GET", url, nil)
+const tgjuURL = "https://www.tgju.org/"
+
+func fetchDocument() (*goquery.Document, error) {
+	req, err := http.NewRequest("GET", tgjuURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +166,11 @@ func ScrapePrices() (map[string]string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status code: %d", resp.StatusCode)
 	}
+	return goquery.NewDocumentFromReader(resp.Body)
+}
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+func ScrapePrices() (map[string]string, error) {
+	doc, err := fetchDocument()
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +181,22 @@ func ScrapePrices() (map[string]string, error) {
 	data["Time"] = now.Format("15:04:05")
 	data["JalaliDate"] = jalaliDateString(now)
 	return data, nil
+}
+
+// runJSON fetches one snapshot and writes it as JSON (stdout or -out), optionally
+// appending to a history file. Used by the GitHub Pages workflow.
+func runJSON(out, historyPath string, historyMax int) error {
+	snap, err := FetchSnapshot()
+	if err != nil {
+		return err
+	}
+	if err := writeJSON(out, snap, true); err != nil {
+		return err
+	}
+	if historyPath != "" {
+		return AppendHistory(historyPath, snap, historyMax)
+	}
+	return nil
 }
 
 // --------------------------- Table Rendering ---------------------------
@@ -261,9 +276,20 @@ func renderTable(curr, prev map[string]string) {
 func main() {
 	interval := flag.Int("interval", 20, "Auto refresh interval (seconds). 0 or negative disables auto refresh.")
 	once := flag.Bool("once", false, "Fetch once and exit.")
+	jsonOut := flag.Bool("json", false, "Fetch once and print a JSON snapshot instead of the table.")
+	out := flag.String("out", "", "With -json: write the snapshot to this file instead of stdout.")
+	historyPath := flag.String("history", "", "With -json: append the snapshot to this JSON history file.")
+	historyMax := flag.Int("history-max", 2000, "With -history: maximum number of points to keep.")
 	flag.Parse()
 
 	log.SetFlags(0)
+
+	if *jsonOut || *out != "" {
+		if err := runJSON(*out, *historyPath, *historyMax); err != nil {
+			log.Fatalf("error: %v", err)
+		}
+		return
+	}
 
 	quitCh := make(chan struct{})
 	go handleSignals(quitCh)
