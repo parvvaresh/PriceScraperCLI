@@ -1,0 +1,69 @@
+import { Plugin } from "vite";
+import { ReactCompilerBabelPluginOptions, ReactCompilerOptions, RolldownBabelPreset } from "#optionalTypes";
+export declare const reactCompilerPreset: (options?: ReactCompilerBabelPluginOptions) => RolldownBabelPreset;
+interface ReactCompilerPluginOptions extends ReactCompilerOptions {
+  /**
+   * Log recoverable React Compiler diagnostics through Vite.
+   * Fatal diagnostics are always logged and fail the transform.
+   * @default false
+   * @deprecated Use `reportDiagnostics` instead
+   */
+  logDiagnostics?: boolean;
+}
+export interface Options {
+  /**
+   * Can be used to process extra files like `.mdx`
+   * @example include: /\.(mdx|js|jsx|ts|tsx)$/
+   * @default /\.[tj]sx?$/
+   */
+  include?: string | RegExp | Array<string | RegExp>;
+  /**
+   * Can be used to exclude JSX/TSX files that runs in a worker or are not React files.
+   * Except if explicitly desired, you should keep node_modules in the exclude list
+   * @example exclude: [/\/pdf\//, /\.solid\.tsx$/, /\/node_modules\//]
+   * @default /\/node_modules\//
+   */
+  exclude?: string | RegExp | Array<string | RegExp>;
+  /**
+   * Can be used to skip fast refresh for certain files that won't run in the browser.
+   * @example options.include
+   */
+  refreshInclude?: string | RegExp | Array<string | RegExp>;
+  /**
+   * Can be used to skip fast refresh for certain files that won't run in the browser.
+   * @default options.exclude
+   */
+  refreshExclude?: string | RegExp | Array<string | RegExp>;
+  /**
+   * Control where the JSX factory is imported from.
+   * https://oxc.rs/docs/guide/usage/transformer/jsx.html#import-source
+   * @default 'react'
+   */
+  jsxImportSource?: string;
+  /**
+   * Note: Skipping React import with classic runtime is not supported from v4
+   * @default "automatic"
+   */
+  jsxRuntime?: "classic" | "automatic";
+  /**
+   * React Fast Refresh runtime URL prefix.
+   * Useful in a module federation context to enable HMR by specifying
+   * the host application URL in the Vite config of a remote application.
+   * @example
+   * reactRefreshHost: 'http://localhost:3000'
+   */
+  reactRefreshHost?: string;
+  /**
+   * Enable React Compiler with its default options or configure it.
+   * This requires `oxc-transform-react` to be installed.
+   * @default false
+   * @experimental
+   */
+  compiler?: boolean | ReactCompilerPluginOptions;
+}
+declare function viteReact(opts?: Options): Plugin[];
+declare const viteReactWithPreamble: typeof viteReact & {
+  preambleCode: string;
+};
+declare function viteReactForCjs(this: unknown, options: Options): Plugin[];
+export { type ReactCompilerPluginOptions as ReactCompilerOptions, viteReactWithPreamble as default, viteReactForCjs as "module.exports" };

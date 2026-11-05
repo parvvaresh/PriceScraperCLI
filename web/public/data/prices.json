@@ -1,0 +1,89 @@
+{
+  "source": "https://www.tgju.org/",
+  "fetchedAt": "2026-11-05T15:53:11Z",
+  "jalaliDate": "1405-08-14",
+  "time": "19:23:11",
+  "items": [
+    {
+      "key": "Stock",
+      "title": "بورس",
+      "price": "7,908,199",
+      "value": 7908199,
+      "changePercent": 0,
+      "changeAmount": 0,
+      "direction": "flat"
+    },
+    {
+      "key": "GoldOunce",
+      "title": "انس طلا",
+      "price": "4,134.49",
+      "value": 4134.49,
+      "changePercent": 1.77,
+      "changeAmount": 71.96,
+      "direction": "up"
+    },
+    {
+      "key": "GoldMithqal",
+      "title": "مثقال طلا",
+      "price": "1,128,990,000",
+      "value": 1128990000,
+      "changePercent": 0,
+      "changeAmount": 0,
+      "direction": "flat"
+    },
+    {
+      "key": "Gold18K",
+      "title": "طلا ۱۸",
+      "price": "260,621,000",
+      "value": 260621000,
+      "changePercent": 0,
+      "changeAmount": 0,
+      "direction": "flat"
+    },
+    {
+      "key": "Coin",
+      "title": "سکه",
+      "price": "2,646,100,000",
+      "value": 2646100000,
+      "changePercent": 0,
+      "changeAmount": 0,
+      "direction": "flat"
+    },
+    {
+      "key": "Dollar",
+      "title": "دلار",
+      "price": "2,689,000",
+      "value": 2689000,
+      "changePercent": 0,
+      "changeAmount": 0,
+      "direction": "flat"
+    },
+    {
+      "key": "BrentOil",
+      "title": "نفت برنت",
+      "price": "93.731",
+      "value": 93.731,
+      "changePercent": -1.53,
+      "changeAmount": -1.432,
+      "direction": "down"
+    },
+    {
+      "key": "Tether",
+      "title": "تتر",
+      "price": "2,693,840",
+      "value": 2693840,
+      "changePercent": 0,
+      "changeAmount": 0,
+      "direction": "flat"
+    },
+    {
+      "key": "Bitcoin",
+      "title": "بیت کوین",
+      "price": "80596.15",
+      "value": 80596.15,
+      "changePercent": 0.51,
+      "changeAmount": 412.19,
+      "direction": "up"
+    }
+  ]
+}
