@@ -49,6 +49,23 @@ npm test         # unit tests (vitest)
 npm run build    # production build -> web/dist
 ```
 
+### Statistical forecast (no ML)
+
+The history chart can project prices forward (6h / 1d / 3d / 1w) using only classical
+time-series statistics (`web/src/forecast.ts`), with no training and no model weights:
+
+1. the irregular scrape history is resampled onto a regular grid (last value carried forward) and moved to log space;
+2. eight models are fitted: random walk, drift, simple exponential smoothing, damped Holt, Theta,
+   ARIMA(1,1,0) (OLS), linear trend, and an equal-weight combination;
+3. each model is scored with a **rolling-origin backtest** (parameters estimated on the older 70%, tested on the
+   newest 30%), and the one with the lowest error is picked automatically. You can also choose a model yourself;
+4. the chart shows the point forecast with **80% / 95% prediction intervals** (analytic forecast variance). The panel
+   also shows the probability of ending above today's price, the backtest error, the skill vs. the random walk, and
+   the empirical interval coverage.
+
+The chart also has optional moving-average and Bollinger-band overlays, high/low markers, and a stats row.
+The forecast is informational only, not financial advice.
+
 ### How the hosted site stays fresh
 
 GitHub Pages only serves static files, and browsers can't scrape tgju.org directly (CORS). So
