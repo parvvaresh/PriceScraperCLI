@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePrices } from "./usePrices";
 import { DISPLAY_ORDER, metaFor } from "./meta";
-import { formatJalaliDate, formatRelative, formatTime, type Currency } from "./format";
+import { formatJalaliDate, formatNumber, formatPercent, formatRelative, formatTime, type Currency } from "./format";
 import { PriceCard } from "./components/PriceCard";
 import { HistoryChart } from "./components/HistoryChart";
+import { buildWatchlistRows } from "./watchlist";
 
 const REPO_URL = "https://github.com/parvvaresh/PriceScraperCLI";
 const STALE_MS = 3 * 60 * 60 * 1000;
@@ -17,6 +18,25 @@ function usePersisted<T extends string>(key: string, initial: T): [T, (v: T) => 
   return [value, setValue];
 }
 
+function usePersistedList(
+  key: string,
+  initial: string[],
+): [string[], (value: string[] | ((prev: string[]) => string[])) => void] {
+  const [value, setValue] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return initial;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : initial;
+    } catch {
+      return initial;
+    }
+  });
+
+  useEffect(() => localStorage.setItem(key, JSON.stringify(value)), [key, value]);
+  return [value, setValue];
+}
+
 export default function App() {
   const { snapshot, history, error, loading, refresh } = usePrices();
   const [currency, setCurrency] = usePersisted<Currency>("currency", "toman");
@@ -24,6 +44,8 @@ export default function App() {
     "theme",
     window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark",
   );
+  const defaultWatchlist = ["Dollar", "GoldOunce", "Bitcoin", "Tether"];
+  const [watchlist, setWatchlist] = usePersistedList("watchlist", defaultWatchlist);
   const [selected, setSelected] = useState("Dollar");
   const [, tick] = useState(0);
 
@@ -62,8 +84,20 @@ export default function App() {
     [items],
   );
 
+  const watchlistRows = useMemo(
+    () => buildWatchlistRows(snapshot, history, watchlist),
+    [history, snapshot, watchlist],
+  );
+
   const selectedItem = items.find((i) => i.key === selected) ?? items[0];
   const stale = snapshot ? Date.now() - new Date(snapshot.fetchedAt).getTime() > STALE_MS : false;
+
+  const toggleWatchKey = (key: string) => {
+    setWatchlist((current) => {
+      if (current.includes(key)) return current.filter((item) => item !== key);
+      return [...current, key].slice(-6);
+    });
+  };
 
   return (
     <div className="app">
@@ -136,6 +170,62 @@ export default function App() {
               ({error}) — اگر محلی اجرا می‌کنید، ابتدا <code>npm run data</code> را بزنید.
             </span>
           </div>
+        )}
+
+        {items.length > 0 && (
+          <section className="panel watchlist" aria-labelledby="watchlist-title">
+            <div className="panel__head">
+              <div>
+                <h2 id="watchlist-title" className="panel__title">Watchlist بازار</h2>
+                <p className="panel__sub">دارایی‌های منتخب را برای بررسی سریع وضعیت بازار در یک نگاه دنبال کنید.</p>
+              </div>
+            </div>
+
+            <div className="watchlist__picker" aria-label="انتخاب دارایی‌های مورد علاقه">
+              {items.map((it) => (
+                <button
+                  key={it.key}
+                  type="button"
+                  className={`watchlist__tag${watchlist.includes(it.key) ? " is-active" : ""}`}
+                  onClick={() => toggleWatchKey(it.key)}
+                  aria-pressed={watchlist.includes(it.key)}
+                >
+                  {metaFor(it.key, it.title).name}
+                </button>
+              ))}
+            </div>
+
+            {watchlistRows.length > 0 && (
+              <div className="watchlist__grid">
+                {watchlistRows.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    className="watchlist__card"
+                    onClick={() => setSelected(row.key)}
+                  >
+                    <div className="watchlist__header">
+                      <span>{row.title}</span>
+                      <span className={`watchlist__direction watchlist__direction--${row.direction}`}>
+                        {row.direction === "up" ? "▲" : row.direction === "down" ? "▼" : "●"}
+                      </span>
+                    </div>
+                    <div className="watchlist__value">{formatNumber(row.value, metaFor(row.key).unit)}</div>
+                    <div className="watchlist__meta">
+                      <span className={row.changePercent >= 0 ? "pos" : row.changePercent < 0 ? "neg" : ""}>
+                        {formatPercent(row.changePercent)}
+                      </span>
+                      <span className="muted">{row.signal.label}</span>
+                    </div>
+                    <div className="watchlist__signal">
+                      <span className={`watchlist__signal-dot watchlist__signal-dot--${row.signal.direction}`} />
+                      {row.signal.summary}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         <section className="grid" aria-label="قیمت‌ها">

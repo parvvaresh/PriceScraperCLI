@@ -13,6 +13,7 @@ import {
   type Currency,
 } from "../format";
 import { buildForecast, movingBands, type BandPoint, type ModelId } from "../forecast";
+import { computeMarketAnomaly } from "../anomaly";
 import { isLocalMidnight, niceTicks, timeTicks } from "../chartScale";
 import { ForecastPanel } from "./ForecastPanel";
 
@@ -254,6 +255,13 @@ export function HistoryChart({ itemKey, meta, history, currency }: Props) {
     const avg = vs.reduce((s, v) => s + v, 0) / vs.length;
     return { hi, lo, avg, spread: lo ? ((hi - lo) / lo) * 100 : 0 };
   }, [visible]);
+
+  const signal = useMemo(() => {
+    if (!visible.length) return null;
+    const values = visible.map((p) => p.v);
+    const forecastMean = chosen?.path.at(-1)?.mean;
+    return computeMarketAnomaly(values, forecastMean);
+  }, [visible, chosen]);
 
   const target = hover != null && geo ? geo.targets[hover] : null;
   const hoverObs = target?.kind === "obs" ? visible[target.i] : null;
@@ -562,6 +570,36 @@ export function HistoryChart({ itemKey, meta, history, currency }: Props) {
           </>
         )}
       </div>
+
+      {signal && (
+        <div className={`anomaly anomaly--${signal.direction}`}>
+          <div className="anomaly__head">
+            <span className="anomaly__label">{signal.label}</span>
+            <span className={`anomaly__badge anomaly__badge--${signal.direction}`}>
+              {signal.direction === "up" ? "فشار خرید" : signal.direction === "down" ? "فشار فروش" : "خنثی"}
+            </span>
+          </div>
+          <div className="anomaly__metrics">
+            <div>
+              <span>z-score ۲۴h</span>
+              <strong>{signal.zScore24h.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>اختلاف نسبت به ۷ روز</span>
+              <strong>{formatPercent(signal.vs7d)}</strong>
+            </div>
+            <div>
+              <span>نوسان روزانه</span>
+              <strong>{formatPercent(signal.volatility)}</strong>
+            </div>
+            <div>
+              <span>فاصله از پیش‌بینی</span>
+              <strong>{formatPercent(signal.forecastGap)}</strong>
+            </div>
+          </div>
+          <p className="anomaly__summary">{signal.summary}</p>
+        </div>
+      )}
 
       {stats && (
         <dl className="stats">
