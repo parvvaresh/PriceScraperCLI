@@ -479,6 +479,114 @@ pre {
   fill: var(--flat-bg);
 }
 
+/* ---------- watchlist ---------- */
+
+.watchlist__picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.watchlist__tag {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.watchlist__tag:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.watchlist__tag.is-active {
+  background: var(--surface);
+  border-color: var(--series-1);
+  color: var(--text);
+}
+.watchlist__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.watchlist__card {
+  text-align: right;
+  width: 100%;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  color: var(--text);
+}
+.watchlist__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+.watchlist__direction {
+  font-size: 1rem;
+  font-weight: 800;
+}
+.watchlist__direction--up {
+  color: var(--pos);
+}
+.watchlist__direction--down {
+  color: var(--neg);
+}
+.watchlist__direction--flat {
+  color: var(--muted);
+}
+.watchlist__value {
+  font-size: 1.46rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.watchlist__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+.watchlist__signal {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.76rem;
+  line-height: 1.7;
+  color: var(--text-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.watchlist__signal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex: none;
+}
+.watchlist__signal-dot--up {
+  background: var(--pos);
+  box-shadow: 0 0 0 4px var(--pos-bg);
+}
+.watchlist__signal-dot--down {
+  background: var(--neg);
+  box-shadow: 0 0 0 4px var(--neg-bg);
+}
+.watchlist__signal-dot--flat {
+  background: var(--muted);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
+}
+
 /* ---------- panel + chart ---------- */
 
 .panel {
@@ -771,6 +879,80 @@ pre {
 .tooltip__time {
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+/* anomaly signal */
+
+.anomaly {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--surface-2), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+}
+.anomaly--up {
+  border-color: color-mix(in srgb, var(--pos) 35%, var(--border));
+}
+.anomaly--down {
+  border-color: color-mix(in srgb, var(--neg) 35%, var(--border));
+}
+.anomaly__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.anomaly__label {
+  font-size: 1rem;
+  font-weight: 800;
+}
+.anomaly__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.anomaly__badge--up {
+  color: var(--pos);
+  background: var(--pos-bg);
+}
+.anomaly__badge--down {
+  color: var(--neg);
+  background: var(--neg-bg);
+}
+.anomaly__badge--flat {
+  color: var(--text-2);
+  background: var(--flat-bg);
+}
+.anomaly__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.anomaly__metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.anomaly__metrics strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.anomaly__summary {
+  margin: 12px 0 0;
+  font-size: 0.87rem;
+  line-height: 1.8;
+  color: var(--text-2);
 }
 
 /* stats row */
