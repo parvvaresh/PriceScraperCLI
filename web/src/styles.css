@@ -479,6 +479,100 @@ pre {
   fill: var(--flat-bg);
 }
 
+/* ---------- market pulse ---------- */
+
+.market-overview {
+  position: relative;
+  overflow: hidden;
+}
+.market-overview::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(42, 120, 214, 0.18), transparent 70%);
+  pointer-events: none;
+}
+.market-pulse {
+  position: relative;
+  z-index: 1;
+  padding: 14px 16px 18px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(42, 120, 214, 0.08), rgba(255, 255, 255, 0.02));
+}
+.market-pulse__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.market-pulse__title {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.market-pulse__label {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.market-pulse__label--up {
+  color: var(--pos);
+}
+.market-pulse__label--down {
+  color: var(--neg);
+}
+.market-pulse__label--flat {
+  color: var(--text-2);
+}
+.market-pulse__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.market-pulse__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.market-pulse__card span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.market-pulse__card strong {
+  font-size: 0.96rem;
+}
+.market-pulse__card--up {
+  background: linear-gradient(135deg, rgba(47, 191, 133, 0.12), var(--surface));
+  border-color: rgba(47, 191, 133, 0.35);
+}
+.market-pulse__card--down {
+  background: linear-gradient(135deg, rgba(240, 107, 107, 0.12), var(--surface));
+  border-color: rgba(240, 107, 107, 0.35);
+}
+.market-pulse__card--flat {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), var(--surface));
+}
+.market-pulse__card--neutral {
+  background: linear-gradient(135deg, rgba(219, 161, 52, 0.1), var(--surface));
+  border-color: rgba(245, 184, 61, 0.35);
+}
+.market-pulse__summary {
+  margin: 12px 0 0;
+  color: var(--text-2);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
 /* ---------- watchlist ---------- */
 
 .watchlist__picker {
