@@ -5,6 +5,7 @@ import { formatJalaliDate, formatNumber, formatPercent, formatRelative, formatTi
 import { PriceCard } from "./components/PriceCard";
 import { HistoryChart } from "./components/HistoryChart";
 import { buildWatchlistRows } from "./watchlist";
+import { computeMarketPulse, filterPulseRows, type MarketCategory } from "./marketPulse";
 
 const REPO_URL = "https://github.com/parvvaresh/PriceScraperCLI";
 const STALE_MS = 3 * 60 * 60 * 1000;
@@ -47,6 +48,7 @@ export default function App() {
   const defaultWatchlist = ["Dollar", "GoldOunce", "Bitcoin", "Tether"];
   const [watchlist, setWatchlist] = usePersistedList("watchlist", defaultWatchlist);
   const [selected, setSelected] = useState("Dollar");
+  const [category, setCategory] = useState<MarketCategory>("all");
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -88,6 +90,14 @@ export default function App() {
     () => buildWatchlistRows(snapshot, history, watchlist),
     [history, snapshot, watchlist],
   );
+
+  const filteredWatchlistRows = useMemo(
+    () => filterPulseRows(watchlistRows, category),
+    [watchlistRows, category],
+  );
+
+  const marketPulse = useMemo(() => computeMarketPulse(filteredWatchlistRows), [filteredWatchlistRows]);
+  const heatTone = marketPulse.heatIndex > 0 ? "up" : marketPulse.heatIndex < 0 ? "down" : "flat";
 
   const selectedItem = items.find((i) => i.key === selected) ?? items[0];
   const stale = snapshot ? Date.now() - new Date(snapshot.fetchedAt).getTime() > STALE_MS : false;
@@ -173,59 +183,107 @@ export default function App() {
         )}
 
         {items.length > 0 && (
-          <section className="panel watchlist" aria-labelledby="watchlist-title">
-            <div className="panel__head">
-              <div>
-                <h2 id="watchlist-title" className="panel__title">Watchlist بازار</h2>
-                <p className="panel__sub">دارایی‌های منتخب را برای بررسی سریع وضعیت بازار در یک نگاه دنبال کنید.</p>
+          <>
+            <section className="panel market-overview" aria-labelledby="market-overview-title">
+              <div className="panel__head">
+                <div>
+                  <h2 id="market-overview-title" className="panel__title">بازار امروز</h2>
+                  <p className="panel__sub">خلاصه‌ی لحظه‌ای بازار با تمرکز روی روند، هشدارها و بهترین/بدترین دارایی‌های حاضر.</p>
+                </div>
               </div>
-            </div>
 
-            <div className="watchlist__picker" aria-label="انتخاب دارایی‌های مورد علاقه">
-              {items.map((it) => (
-                <button
-                  key={it.key}
-                  type="button"
-                  className={`watchlist__tag${watchlist.includes(it.key) ? " is-active" : ""}`}
-                  onClick={() => toggleWatchKey(it.key)}
-                  aria-pressed={watchlist.includes(it.key)}
-                >
-                  {metaFor(it.key, it.title).name}
-                </button>
-              ))}
-            </div>
+              <div className="market-pulse">
+                <div className="market-pulse__head">
+                  <div>
+                    <div className="market-pulse__title">هوای بازار</div>
+                    <div className={`market-pulse__label market-pulse__label--${heatTone}`}>{marketPulse.label}</div>
+                  </div>
+                  <div className="segmented" role="group" aria-label="دسته‌بندی بازار">
+                    {(["all", "currency", "gold", "global"] as MarketCategory[]).map((c) => (
+                      <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(c)}>
+                        {c === "all" ? "همه" : c === "currency" ? "ارز" : c === "gold" ? "فلز" : "جهانی"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {watchlistRows.length > 0 && (
-              <div className="watchlist__grid">
-                {watchlistRows.map((row) => (
+                <div className="market-pulse__grid">
+                  <div className={`market-pulse__card market-pulse__card--${heatTone}`}>
+                    <span>Heat Index</span>
+                    <strong>{marketPulse.heatIndex}</strong>
+                  </div>
+                  <div className="market-pulse__card market-pulse__card--up">
+                    <span>بیشترین رشد</span>
+                    <strong>{marketPulse.topGainer ? metaFor(marketPulse.topGainer.key).name : "—"}</strong>
+                  </div>
+                  <div className="market-pulse__card market-pulse__card--down">
+                    <span>بیشترین افت</span>
+                    <strong>{marketPulse.topLoser ? metaFor(marketPulse.topLoser.key).name : "—"}</strong>
+                  </div>
+                  <div className="market-pulse__card market-pulse__card--neutral">
+                    <span>هشدار فعال</span>
+                    <strong>{marketPulse.alertCount}</strong>
+                  </div>
+                </div>
+
+                <p className="market-pulse__summary">{marketPulse.summary}</p>
+              </div>
+            </section>
+
+            <section className="panel watchlist" aria-labelledby="watchlist-title">
+              <div className="panel__head">
+                <div>
+                  <h2 id="watchlist-title" className="panel__title">Watchlist بازار</h2>
+                  <p className="panel__sub">دارایی‌های منتخب را برای بررسی سریع وضعیت بازار در یک نگاه دنبال کنید.</p>
+                </div>
+              </div>
+
+              <div className="watchlist__picker" aria-label="انتخاب دارایی‌های مورد علاقه">
+                {items.map((it) => (
                   <button
-                    key={row.key}
+                    key={it.key}
                     type="button"
-                    className="watchlist__card"
-                    onClick={() => setSelected(row.key)}
+                    className={`watchlist__tag${watchlist.includes(it.key) ? " is-active" : ""}`}
+                    onClick={() => toggleWatchKey(it.key)}
+                    aria-pressed={watchlist.includes(it.key)}
                   >
-                    <div className="watchlist__header">
-                      <span>{row.title}</span>
-                      <span className={`watchlist__direction watchlist__direction--${row.direction}`}>
-                        {row.direction === "up" ? "▲" : row.direction === "down" ? "▼" : "●"}
-                      </span>
-                    </div>
-                    <div className="watchlist__value">{formatNumber(row.value, metaFor(row.key).unit)}</div>
-                    <div className="watchlist__meta">
-                      <span className={row.changePercent >= 0 ? "pos" : row.changePercent < 0 ? "neg" : ""}>
-                        {formatPercent(row.changePercent)}
-                      </span>
-                      <span className="muted">{row.signal.label}</span>
-                    </div>
-                    <div className="watchlist__signal">
-                      <span className={`watchlist__signal-dot watchlist__signal-dot--${row.signal.direction}`} />
-                      {row.signal.summary}
-                    </div>
+                    {metaFor(it.key, it.title).name}
                   </button>
                 ))}
               </div>
-            )}
-          </section>
+
+              {filteredWatchlistRows.length > 0 && (
+                <div className="watchlist__grid">
+                  {filteredWatchlistRows.map((row) => (
+                    <button
+                      key={row.key}
+                      type="button"
+                      className="watchlist__card"
+                      onClick={() => setSelected(row.key)}
+                    >
+                      <div className="watchlist__header">
+                        <span>{row.title}</span>
+                        <span className={`watchlist__direction watchlist__direction--${row.direction}`}>
+                          {row.direction === "up" ? "▲" : row.direction === "down" ? "▼" : "●"}
+                        </span>
+                      </div>
+                      <div className="watchlist__value">{formatNumber(row.value, metaFor(row.key).unit)}</div>
+                      <div className="watchlist__meta">
+                        <span className={row.changePercent >= 0 ? "pos" : row.changePercent < 0 ? "neg" : ""}>
+                          {formatPercent(row.changePercent)}
+                        </span>
+                        <span className="muted">{row.signal.label}</span>
+                      </div>
+                      <div className="watchlist__signal">
+                        <span className={`watchlist__signal-dot watchlist__signal-dot--${row.signal.direction}`} />
+                        {row.signal.summary}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         <section className="grid" aria-label="قیمت‌ها">
